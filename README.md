@@ -4,93 +4,194 @@ This readme include errors i faced , issues in these tts models and suggestions
 
 
 
-# **Error Debugging Report**
+---
+
+# **Comprehensive Error Debugging Report**
 
 ### **Project Context**
 
-During fine-tuning of a multimodal (text + audio) transformer model using Hugging Face `Trainer` and `unsloth` processor, multiple preprocessing and training errors were encountered. These errors were due to sequence length mismatches, tokenizer padding/truncation conflicts, and dataset inconsistencies. Below is a systematic record of the issues and resolutions.
+During fine-tuning of a multimodal (text + audio) transformer model using Hugging Face `Trainer` and `unsloth` processor, multiple preprocessing and training errors were encountered. These errors arose due to:
+
+* Sequence length mismatches
+* Tokenizer padding/truncation conflicts
+* Dataset inconsistencies
+* Audio decoding issues
+* Dependency/version conflicts
+
+Below is a systematic record of the issues and resolutions.
 
 ---
 
-## **1. ValueError: expected sequence of length 416 at dim 1 (got 453)**
+## **1. Hugging Face Repo Creation Error**
 
-* **Cause**: Some preprocessed sequences (`input_ids` or `input_values`) exceeded the defined maximum length (416). Trainer requires all tensors in a batch to have the same length.
-* **Fix**:
-
-  * Added `truncation=True` in both `text_kwargs` and `audio_kwargs` of the processor.
-  * Enforced consistent `max_length` for text and audio.
-  * Verified with sanity checks (`len(ex['input_ids'])`).
-  * **Final resolution**: deliberately fixed `max_length` to the **highest multiple of 8 within model limits (456)** so all samples fit without filtering.
-
----
-
-## **2. Truncation and padding conflict warning**
+**Error:**
 
 ```
-Truncation and padding are both activated but truncation length (414) is not a multiple of pad_to_multiple_of (8)
+Repo id must use alphanumeric chars or '-', '_', '.', '--' and '..' are forbidden...
+403 Forbidden: You don't have the rights to create a dataset under the namespace "SHEEP-LABS".
 ```
 
-* **Cause**: `max_length` was set to 414, but `pad_to_multiple_of=8`. 414 is not divisible by 8.
-* **Fix**: Adjusted `max_length` to a multiple of 8 (456).
+**Cause:**
+Invalid repo name (spaces, special characters) and insufficient permissions for the chosen namespace.
+
+**Fix:**
+
+* Use only lowercase letters, numbers, `-` or `_`.
+  Example: `sheep-labs-dataset`
+* Ensure Hugging Face token has write permissions.
 
 ---
 
-## **3. Error: Both padding and truncation were set**
+## **2. yt-dlp Subprocess Error**
+
+**Error:**
 
 ```
-Both padding and truncation were set. Make sure you only set one.
+could not figure out file : ...
 ```
 
-* **Cause**: The tokenizer was given **conflicting instructions**:
+**Cause:** Incorrect subprocess call or missing binary (`yt_dlp` not installed).
 
-  * `padding="max_length"` + `pad_to_multiple_of=8` + `truncation=True`.
-* **Fix**: Removed `pad_to_multiple_of` and kept:
+**Fix:**
 
-  ```python
-  "padding": "max_length",
-  "truncation": True,
-  "max_length": 456
-  ```
+* Install yt-dlp: `pip install yt-dlp`
+* Call via:
 
----
-
-## **4. 'list' object has no attribute 'shape'**
-
-* **Cause**: Preprocessed dataset values (`input_ids`) were stored as **lists**, not tensors. Lists use `len()`, not `.shape`.
-* **Fix**: Replaced `.shape[0]` with `len(example['input_ids'])` when validating dataset lengths.
+```python
+subprocess.run(["yt-dlp", "--print", "%(title)s", URL], ...)
+```
 
 ---
 
-## **5. Dataset inconsistency checks**
+## **3. PathLike / Clip Creation Error**
 
-* **Observation**: Several examples exceeded the target max length (416), e.g.:
+**Error:** Only 2 clips created instead of expected number.
 
-  ```
-  Train example 7 is too long: 453
-  Train example 26 is too long: 454
-  Train example 44 is too long: 456
-  ```
-* **Fix**: Instead of filtering these samples, the preprocessing pipeline was updated to **pad/truncate all sequences to 456 tokens**, ensuring no data loss and consistent batching.
+**Cause:** Audio splitting logic did not account for total duration vs chunk size.
+
+**Fix:** Debug chunking loop and validate audio duration before splitting.
 
 ---
 
-## **6. Clarification: Is only 416 allowed?**
+## **4. Colab Runtime Errors**
 
-* **Finding**: No, any value can be used for `max_text_length` as long as:
+**Issue:** After restarting runtime / kernel, some variables and paths went missing.
 
-  * It is ≤ `model.config.max_position_embeddings` (e.g., 512).
-  * Prefer multiples of 8 for efficiency.
-* **Resolution**: Chose **456** (highest multiple of 8 covering the dataset) as the final fixed length.
+**Cause:** Colab clears memory after restart.
+
+**Fix:** Re-run all setup cells (imports, dataset mounting, variable definitions) after restart.
 
 ---
 
-# **Final Resolution**
+## **5. Torchcodec / Audio Decoding Errors**
 
-* Preprocessing updated to enforce **consistent truncation + padding**:
+**Error:**
 
-  * `max_text_length = 456` (highest multiple of 8 within model limits).
-  * `padding="max_length", truncation=True`.
-  * Audio similarly padded/truncated.
-* Dataset validated to ensure **all sequences have identical lengths**, preventing Trainer shape mismatch errors.
-* This approach preserved **all training samples** without discarding long examples.
+```
+ImportError: To support decoding audio data, please install 'torchcodec'.
+```
+
+**Cause:** Required audio decoding library missing.
+
+**Fix:**
+
+```bash
+pip install torchcodec soundfile torchaudio ffmpeg-python
+```
+
+* Cast audio column to Hugging Face `Audio` type:
+
+```python
+raw_ds = raw_ds.cast_column("audio", Audio(sampling_rate=16000))
+```
+
+---
+
+## **6. Data Collator / Sequence Length Mismatch**
+
+**Error:**
+
+```
+ValueError: expected sequence of length 416 at dim 1 (got 453)
+```
+
+**Cause:**
+
+* Preprocessed sequences (`input_ids` or `input_values`) exceeded defined maximum length.
+* Trainer requires all tensors in a batch to have the same length.
+
+**Fix:**
+
+* Added `truncation=True` in both `text_kwargs` and `audio_kwargs`.
+* Enforced consistent `max_length` for text and audio.
+* **Final resolution:** fixed `max_length` to **highest multiple of 8 within model limits (456)** to ensure all sequences fit.
+
+---
+
+### **Additional Related Errors / Fixes**
+
+1. **Truncation and padding conflict warning**
+
+   ```
+   Truncation length (414) is not a multiple of pad_to_multiple_of (8)
+   ```
+
+   **Fix:** Adjusted `max_length` to 456 (multiple of 8).
+
+2. **Both padding and truncation were set**
+
+   ```
+   Both padding and truncation were set. Make sure you only set one.
+   ```
+
+   **Fix:** Removed `pad_to_multiple_of` and kept:
+
+   ```python
+   "padding": "max_length",
+   "truncation": True,
+   "max_length": 456
+   ```
+
+3. **'list' object has no attribute 'shape'**
+   **Cause:** `input_ids` stored as lists, not tensors.
+   **Fix:** Used `len(example['input_ids'])` for length checks.
+
+4. **Dataset inconsistency checks**
+
+   * Some examples exceeded target max length: 453, 454, 456
+   * **Fix:** Pad/truncate all sequences to 456 tokens; no data discarded.
+
+---
+
+## **7. Trainer Misconfiguration**
+
+**Error:** `eval_strategy` not recognized
+
+**Cause:** Wrong argument name in `TrainingArguments`.
+
+**Fix:** Use `evaluation_strategy="steps"` instead of `eval_strategy`.
+
+**Additional Fix:** Added **custom data collator** to handle dynamic padding:
+
+```python
+def data_collator(batch):
+    batch = [ex for ex in batch if ex is not None]
+    return processor.pad(batch, return_tensors="pt")
+```
+
+* This allows Trainer to handle variable-length sequences safely.
+
+---
+
+## **8. Final Resolution**
+
+* Preprocessing updated for **consistent truncation + padding**:
+
+  * `max_text_length = 480` (highest multiple of 8 within model limits)
+  * `padding="max_length"`
+  * Audio sequences similarly padded
+* Dataset validated: **all sequences have identical lengths**
+* Trainer now works with **dynamic padding collator**, avoiding shape mismatch errors
+* No training samples were discarded.
+
 
