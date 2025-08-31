@@ -1,8 +1,8 @@
 # Fine-tunning-csm-1b-model
 
-This readme include errors i faced , issues in these tts models and suggestions
+This README includes the errors I encountered, issues with these TTS models, and my suggestions.
 
-Incase attached notebook won't work 
+Incase attached notebook won't work (*sometimes this notebook show some error on web view but runs perfectly fine in codespace so please go through link below*) 
 - https://colab.research.google.com/drive/1MCStrhoY7FYpR11eiJ9bGIC965UOS4wj?usp=sharing
 
 ---
