@@ -2,6 +2,45 @@
 
 This readme include errors i faced , issues in these tts models and suggestions
 
+---
+
+# Project Report: Custom Voice Model Training
+
+## 1. Model Training and Performance
+
+### Initial Training (3 Epochs)
+The model was first trained for **3 epochs**.  
+- Dataset: 27-minute speech  
+- Observed Performance: The results were **poor**, with the generated speech being unclear and inconsistent.  
+
+**Audio Example:**  
+[Attached audio file: `3_epoch_training_sample.mp3`]  
+
+### Extended Training (30 Epochs)
+After observing poor performance, the model was trained for **30 epochs** using the same dataset.  
+- Dataset: 27-minute speech  
+- Observed Performance: There was a **significant improvement** in speech clarity and coherence.  
+
+**Audio Example:**  
+[Attached audio file: `30_epoch_training_sample.mp3`]  
+
+---
+
+## 2. Issues and Suggestions
+
+### Observed Issues
+- Simple generation of **30-minute custom voice** often **hallucinated/fumbled/blabbered**, struggling to maintain coherent speech.  
+- The cloned model performed slightly better but **still exhibited hallucinations** and inconsistencies.  
+
+**Audio Examples:**  
+- [Attach audio file: `30_min_simple_generation.mp3`]  
+- [Attach audio file: `30_min_cloned_model_generation.mp3`]  
+
+### Suggestions
+- Avoid using words like **"couldn't"**, **"shouldn't"**, or other contractions that may confuse the model.  
+- Consider **longer and more diverse training data** to reduce hallucinations.  
+- Implement **post-processing corrections** to handle minor speech inconsistencies.  
+
 
 
 ---
