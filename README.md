@@ -1,5 +1,7 @@
 # Fine-tunning-csm-1b-model
-Fine tunning csm-1b model using LoRA on JFK's voice 
+
+This readme include errors i faced , issues in these tts models and suggestions
+
 
 
 # **Error Debugging Report**
