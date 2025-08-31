@@ -2,6 +2,9 @@
 
 This readme include errors i faced , issues in these tts models and suggestions
 
+Incase attached notebook won't work 
+- https://colab.research.google.com/drive/1MCStrhoY7FYpR11eiJ9bGIC965UOS4wj?usp=sharing
+
 ---
 
 # Project Report: Custom Voice Model Training
@@ -14,7 +17,7 @@ The model was first trained for **3 epochs**.
 - Observed Performance: The results were **poor**, with the generated speech being unclear and inconsistent.  
 
 **Audio Example:**  
-[Attached audio file: `3_epoch_training_sample.mp3`]  
+[Listen to 3-epoch training sample](audio/3epoch_generated.wav)
 
 ### Extended Training (30 Epochs)
 After observing poor performance, the model was trained for **30 epochs** using the same dataset.  
@@ -22,19 +25,21 @@ After observing poor performance, the model was trained for **30 epochs** using 
 - Observed Performance: There was a **significant improvement** in speech clarity and coherence.  
 
 **Audio Example:**  
-[Attached audio file: `30_epoch_training_sample.mp3`]  
+[Listen to 30-epoch training sample](audio/30epochs_generated.wav) 
 
 ---
 
 ## 2. Issues and Suggestions
 
 ### Observed Issues
-- Simple generation of **30-minute custom voice** often **hallucinated/fumbled/blabbered**, struggling to maintain coherent speech.  
+- Simple generation of **30-second custom voice** often **hallucinated/fumbled/blabbered**, struggling to maintain coherent speech.  
 - The cloned model performed slightly better but **still exhibited hallucinations** and inconsistencies.  
 
+**Text Given** - `Artificial Intelligence is transforming the way we live and work. From virtual assistants that make our lives easier, to powerful tools that help doctors detect diseases early, AI is creating opportunities we couldn’t imagine a decade ago. But with this power also comes responsibility—to use AI ethically, reduce bias, and ensure it benefits everyone. The future of AI is not just about machines, it’s about how humans and technology can work together to solve real problems and create a smarter, fairer world.`
+
 **Audio Examples:**  
-- [Attach audio file: `30_min_simple_generation.mp3`]  
-- [Attach audio file: `30_min_cloned_model_generation.mp3`]  
+- [Listen to 30 second generated sample ](audio/30_seconds_30_epoches_generated.wav)
+- [Listen to 30 second cloned generated sample ](audio/30_seconds_30_epoches_cloned_generated.wav)
 
 ### Suggestions
 - Avoid using words like **"couldn't"**, **"shouldn't"**, or other contractions that may confuse the model.  
